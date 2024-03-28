@@ -71,7 +71,6 @@ link_directories(
 add_executable(${PROJECT_NAME}
   src/main.cpp
   src/hand_gesture_det_node.cpp
-  src/hand_gesture_output_parser.cpp
   src/gesture_preprocess.cpp
   src/lmks_process.cpp
   src/gesture_postprocess.cpp

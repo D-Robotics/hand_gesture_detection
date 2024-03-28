@@ -26,7 +26,6 @@
 
 #include "dnn_node/dnn_node.h"
 #include "dnn_node/util/image_proc.h"
-#include "include/hand_gesture_output_parser.h"
 #include "opencv2/core/mat.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
@@ -92,6 +91,8 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
   gesture_preprocess_ =
       std::make_shared<GesturePreProcess>(gesture_preprocess_config_);
 
+  gesture_postprocess_ = std::make_shared<GesturePostProcess>("");
+
   thread_pool_ = std::make_shared<ThreadPool>();
   thread_pool_->msg_handle_.CreatThread(task_num_);
 
@@ -126,36 +127,14 @@ int HandGestureDetNode::SetNodePara() {
   return 0;
 }
 
-int HandGestureDetNode::SetOutputParser() {
-  RCLCPP_INFO(rclcpp::get_logger("hand_gesture_det"), "Set output parser.");
-  // set output parser
-  auto model_manage = GetModel();
-  if (!model_manage || !dnn_node_para_ptr_) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand_gesture_det"), "Invalid model");
-    return -1;
-  }
-
-  std::shared_ptr<OutputParser> out_parser =
-      std::make_shared<HandGestureOutputParser>();
-  model_manage->SetOutputParser(output_index_, out_parser);
-
-  return 0;
-}
-
 int HandGestureDetNode::PostProcess(
     const std::shared_ptr<DnnNodeOutput>& node_output) {
   if (!rclcpp::ok()) {
     return 0;
   }
 
-  if (!msg_publisher_) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
-                 "Invalid msg_publisher_");
-    return -1;
-  }
-
   if (!node_output ||
-      output_index_ >= static_cast<int32_t>(node_output->outputs.size())) {
+      output_index_ >= static_cast<int32_t>(node_output->output_tensors.size())) {
     RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
                  "Invalid node output");
     return -1;
@@ -167,12 +146,23 @@ int HandGestureDetNode::PostProcess(
     return -1;
   }
 
-  auto gesture_res_ptr = std::dynamic_pointer_cast<HandGestureResult>(
-      hand_gesture_output->outputs.front());
-  if (!gesture_res_ptr) {
+  if (!gesture_postprocess_) {
+    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+              "Invalid gesture postprocess");
     return -1;
   }
-  const auto& res = gesture_res_ptr->gesture_res;
+  std::shared_ptr<GestureRes> gesture_res = nullptr;
+  gesture_res = gesture_postprocess_->Execute(hand_gesture_output->output_tensors[0], 
+                                              hand_gesture_output->track_id, 
+                                              hand_gesture_output->timestamp);
+
+  if (!msg_publisher_) {
+    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+                 "Invalid msg_publisher_");
+    return -1;
+  }
+
+  const auto& res = gesture_res;
   if (res->value_ < static_cast<int>(gesture_type::Background) ||
       res->value_ > static_cast<int>(gesture_type::Awesome)) {
     hand_gesture_output->gesture_res->gesture_res_.push_back(
@@ -186,18 +176,6 @@ int HandGestureDetNode::PostProcess(
   hand_gesture_output->gesture_res->is_promised_ = true;
 
   return 0;
-}
-
-int HandGestureDetNode::Predict(
-    std::vector<std::shared_ptr<DNNTensor>>& inputs,
-    std::vector<std::shared_ptr<OutputDescription>>& output_descs,
-    std::shared_ptr<DnnNodeOutput> dnn_output) {
-  RCLCPP_DEBUG(rclcpp::get_logger("hand gesture det node"),
-               "task_num: %d",
-               dnn_node_para_ptr_->task_num);
-
-  return Run(
-      inputs, output_descs, dnn_output, is_sync_mode_ == 1 ? true : false);
 }
 
 void HandGestureDetNode::Publish(
@@ -337,12 +315,6 @@ int HandGestureDetNode::TenserProcess(
   std::unordered_map<uint64_t, std::shared_ptr<HandGestureRes>> gesture_outputs;
   for (size_t idx = 0; idx < input_tensors.size(); idx++) {
     uint64_t track_id = track_ids->at(idx);
-    auto handgesture_output_desc = std::make_shared<HandGestureOutDesc>(
-        model_manage, output_index_, "gesture_branch");
-    handgesture_output_desc->timestamp = timestamp;
-    handgesture_output_desc->track_id = track_id;
-    std::vector<std::shared_ptr<OutputDescription>> output_descs{
-        std::dynamic_pointer_cast<OutputDescription>(handgesture_output_desc)};
 
     auto gesture_output = std::make_shared<HandGestureRes>();
     gesture_outputs[track_id] = gesture_output;
@@ -351,6 +323,7 @@ int HandGestureDetNode::TenserProcess(
     dnn_output->gesture_res = gesture_output;
     dnn_output->gesture_res->is_promised_ = false;
     dnn_output->timestamp = timestamp;
+    dnn_output->track_id = track_id;
 
     std::vector<std::shared_ptr<DNNTensor>> inputs{input_tensors.at(idx)};
 
@@ -362,7 +335,11 @@ int HandGestureDetNode::TenserProcess(
 
     uint32_t ret = 0;
     // 3. 开始预测
-    ret = Predict(inputs, output_descs, dnn_output);
+    RCLCPP_DEBUG(rclcpp::get_logger("hand gesture det node"),
+                "task_num: %d",
+                dnn_node_para_ptr_->task_num);
+    ret = Run(
+      inputs, dnn_output, is_sync_mode_ == 1 ? true : false);
 
     // 4. 处理预测结果，如渲染到图片或者发布预测结果
     if (ret != 0) {
@@ -371,6 +348,7 @@ int HandGestureDetNode::TenserProcess(
       return ret;
     }
   }
+
   // 等待所有input_tensor都推理完成
   // 一帧中可能包含多个target，即多个input_tensor，每个input_tensor对应一个PostProcess，PostProcess中设置推理完成标志
   // 所有input_tensor都推理完成后才会将此帧数据pub出去
@@ -543,65 +521,6 @@ int HandGestureDetNode::GetModelIOInfo() {
     RCLCPP_WARN(
         rclcpp::get_logger("hand gesture det node"), "%s", ss.str().c_str());
   }
-
-  return 0;
-}
-
-int HandGestureDetNode::Render(
-    const std::shared_ptr<hobot::easy_dnn::NV12PyramidInput>& pyramid,
-    std::string result_image,
-    std::vector<std::shared_ptr<hbDNNRoi>> rois,
-    std::vector<std::shared_ptr<inference::Landmarks>> lmkses) {
-  static cv::Scalar colors[] = {
-      cv::Scalar(255, 0, 0),    // red
-      cv::Scalar(255, 255, 0),  // yellow
-      cv::Scalar(0, 255, 0),    // green
-      cv::Scalar(0, 0, 255),    // blue
-  };
-
-  char* y_img = reinterpret_cast<char*>(pyramid->y_vir_addr);
-  char* uv_img = reinterpret_cast<char*>(pyramid->uv_vir_addr);
-  auto height = pyramid->height;
-  auto width = pyramid->width;
-  auto img_y_size = height * width;
-  auto img_uv_size = img_y_size / 2;
-  char* buf = new char[img_y_size + img_uv_size];
-  memcpy(buf, y_img, img_y_size);
-  memcpy(buf + img_y_size, uv_img, img_uv_size);
-  cv::Mat nv12(height * 3 / 2, width, CV_8UC1, buf);
-  cv::Mat bgr;
-  cv::cvtColor(nv12, bgr, CV_YUV2BGR_NV12);
-  auto& mat = bgr;
-
-  RCLCPP_INFO(rclcpp::get_logger("hand lmk det node"),
-              "h w: %d %d,  mat: %d %d",
-              height,
-              width,
-              mat.cols,
-              mat.rows);
-
-  for (auto& roi : rois) {
-    auto rect = *roi;
-    cv::rectangle(mat,
-                  cv::Point(rect.left, rect.top),
-                  cv::Point(rect.right, rect.bottom),
-                  cv::Scalar(255, 0, 0),
-                  3);
-  }
-
-  size_t lmk_num = lmkses.size();
-  for (size_t idx = 0; idx < lmk_num; idx++) {
-    const auto& lmk = *lmkses.at(idx);
-    auto& color = colors[idx % 4];
-    for (const auto& point : lmk) {
-      cv::circle(mat, cv::Point(point.x, point.y), 3, color, 3);
-    }
-  }
-
-  RCLCPP_INFO(rclcpp::get_logger("hand lmk det node"),
-              "Draw result to file: %s",
-              result_image.c_str());
-  cv::imwrite(result_image, mat);
 
   return 0;
 }

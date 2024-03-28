@@ -25,24 +25,13 @@
 #include "dnn_node/dnn_node.h"
 #include "dnn_node/dnn_node_data.h"
 
-using hobot::dnn_node::DNNInput;
 using hobot::dnn_node::DnnNode;
 using hobot::dnn_node::DnnNodeOutput;
-using hobot::dnn_node::DnnNodePara;
-using hobot::dnn_node::DNNResult;
 using hobot::dnn_node::ModelTaskType;
-using hobot::dnn_node::NV12PyramidInput;
-using hobot::dnn_node::TaskId;
+using hobot::dnn_node::DNNTensor;
 
 using hobot::dnn_node::Model;
-using hobot::dnn_node::ModelInferTask;
-using hobot::dnn_node::ModelManager;
-using hobot::dnn_node::ModelRoiInferTask;
 
-using hobot::dnn_node::DNNTensor;
-using hobot::dnn_node::OutputParser;
-
-using hobot::dnn_node::OutputDescription;
 
 using ai_msgs::msg::PerceptionTargets;
 
@@ -101,11 +90,11 @@ struct Point_ {
 typedef Point_<float> HobotPoint;
 typedef std::vector<HobotPoint> Landmarks;
 
-class LandmarksResult : public DNNResult {
+class LandmarksResult {
  public:
   std::vector<Landmarks> values;
 
-  void Reset() override { values.clear(); }
+  void Reset() { values.clear(); }
 };
 
 using LandmarkVector = std::vector<std::shared_ptr<Landmarks>>;

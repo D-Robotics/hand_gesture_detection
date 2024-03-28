@@ -20,8 +20,10 @@
 #include "ai_msgs/msg/capture_targets.hpp"
 #include "ai_msgs/msg/perception_targets.hpp"
 #include "dnn_node/dnn_node.h"
-#include "include/gesture_preprocess.h"
 #include "rclcpp/rclcpp.hpp"
+
+#include "include/gesture_preprocess.h"
+#include "include/gesture_postprocess.h"
 #include "threads/threadpool.h"
 
 #ifndef HAND_GESTURE_DET_NODE_H_
@@ -31,21 +33,11 @@ namespace inference {
 
 using rclcpp::NodeOptions;
 
-using hobot::dnn_node::DNNInput;
 using hobot::dnn_node::DnnNode;
 using hobot::dnn_node::DnnNodeOutput;
-using hobot::dnn_node::DnnNodePara;
-using hobot::dnn_node::DNNResult;
 using hobot::dnn_node::DNNTensor;
 using hobot::dnn_node::Model;
-using hobot::dnn_node::ModelInferTask;
-using hobot::dnn_node::ModelManager;
-using hobot::dnn_node::ModelRoiInferTask;
 using hobot::dnn_node::ModelTaskType;
-using hobot::dnn_node::NV12PyramidInput;
-using hobot::dnn_node::OutputDescription;
-using hobot::dnn_node::OutputParser;
-using hobot::dnn_node::TaskId;
 
 using ai_msgs::msg::PerceptionTargets;
 
@@ -75,7 +67,6 @@ class HandGestureDetNode : public DnnNode {
 
  protected:
   int SetNodePara() override;
-  int SetOutputParser() override;
 
   int PostProcess(const std::shared_ptr<DnnNodeOutput> &outputs) override;
 
@@ -99,6 +90,9 @@ class HandGestureDetNode : public DnnNode {
   std::string gesture_preprocess_config_{""};
   std::shared_ptr<GesturePreProcess> gesture_preprocess_ = nullptr;
 
+  // 模型后处理
+  std::shared_ptr<GesturePostProcess> gesture_postprocess_ = nullptr;
+
   // 模型结构信息, PreProcess需要
   std::vector<hbDNNTensorProperties> input_model_info_;
 
@@ -110,9 +104,8 @@ class HandGestureDetNode : public DnnNode {
 
   std::shared_ptr<ThreadPool> thread_pool_ = nullptr;
 
-  int Predict(std::vector<std::shared_ptr<DNNTensor>> &inputs,
-              std::vector<std::shared_ptr<OutputDescription>> &output_descs,
-              std::shared_ptr<DnnNodeOutput> dnn_output);
+  // int Predict(std::vector<std::shared_ptr<DNNTensor>> &inputs,
+  //             std::shared_ptr<DnnNodeOutput> dnn_output);
 
   std::string ai_msg_sub_topic_name_ = "/hobot_hand_lmk_detection";
   rclcpp::Subscription<ai_msgs::msg::PerceptionTargets>::SharedPtr
@@ -130,11 +123,6 @@ class HandGestureDetNode : public DnnNode {
           &gesture_outputs);
 
   int GetModelIOInfo();
-
-  int Render(const std::shared_ptr<hobot::easy_dnn::NV12PyramidInput> &pyramid,
-             std::string result_image,
-             std::vector<std::shared_ptr<hbDNNRoi>> rois,
-             std::vector<std::shared_ptr<inference::Landmarks>> lmkses);
 };
 }  // namespace inference
 #endif  // HAND_GESTURE_DET_NODE_H_

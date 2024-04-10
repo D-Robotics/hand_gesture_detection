@@ -39,6 +39,13 @@
 
 启动机器人后，通过SSH终端或者VNC连接机器人，点击本页面右上方的“一键部署”按钮，复制如下命令在RDK的系统上运行，完成相关Node的安装。
 
+tros foxy 版本
+```bash
+sudo apt update
+sudo apt install -y tros-hand-gesture-detection
+```
+
+tros humble 版本
 ```bash
 sudo apt update
 sudo apt install -y tros-hand-gesture-detection
@@ -48,6 +55,7 @@ sudo apt install -y tros-hand-gesture-detection
 
 **使用MIPI摄像头发布图片**
 
+tros foxy 版本
 ```shell
 # 配置tros.b环境
 source /opt/tros/setup.bash
@@ -64,11 +72,46 @@ export CAM_TYPE=mipi
 ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
 ```
 
+tros humble 版本
+```shell
+# 配置tros.b humble环境
+source /opt/tros/humble/setup.bash
+
+# 从tros.b的安装路径中拷贝出运行示例需要的配置文件。
+cp -r /opt/tros/${TROS_DISTRO}/lib/mono2d_body_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_lmk_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_gesture_detection/config/ .
+
+# 配置MIPI摄像头
+export CAM_TYPE=mipi
+
+# 启动launch文件
+ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
+```
+
 **使用USB摄像头发布图片**
 
+tros foxy 版本
 ```shell
 # 配置tros.b环境
 source /opt/tros/setup.bash
+
+# 从tros.b的安装路径中拷贝出运行示例需要的配置文件。
+cp -r /opt/tros/${TROS_DISTRO}/lib/mono2d_body_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_lmk_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_gesture_detection/config/ .
+
+# 配置USB摄像头
+export CAM_TYPE=usb
+
+# 启动launch文件
+ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
+```
+
+tros humble 版本
+```shell
+# 配置tros.b humble环境
+source /opt/tros/humble/setup.bash
 
 # 从tros.b的安装路径中拷贝出运行示例需要的配置文件。
 cp -r /opt/tros/${TROS_DISTRO}/lib/mono2d_body_detection/config/ .

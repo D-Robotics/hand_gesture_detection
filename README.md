@@ -37,15 +37,23 @@ Application Scenarios: The gesture recognition algorithm integrates technologies
 
 After the robot is started, connect to the robot via SSH terminal or VNC. Click the "One-Click Deployment" button on this page's top right corner, copy and run the following command on the RDK system to complete the installation of the related Nodes.
 
+tros foxy:
 ```bash
 sudo apt update
 sudo apt install -y tros-hand-gesture-detection
+```
+
+tros humble:
+```bash
+sudo apt update
+sudo apt install -y tros-humble-hand-gesture-detection
 ```
 
 **2. Run the Hand Recognition Detection Feature**
 
 **Publish Images Using MIPI Camera**
 
+tros foxy:
 ```shell
 # Configure the tros.b environment
 source /opt/tros/setup.bash
@@ -62,11 +70,46 @@ export CAM_TYPE=mipi
 ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
 ```
 
+tros humble:
+```shell
+# Configure the tros.b humble environment
+source /opt/tros/humble/setup.bash
+
+# Copy the configuration files required for running examples from the installation path of tros.b.
+cp -r /opt/tros/${TROS_DISTRO}/lib/mono2d_body_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_lmk_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_gesture_detection/config/ .
+
+# Configure MIPI camera
+export CAM_TYPE=mipi
+
+# Launch the launch file
+ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
+```
+
 **Publish Images Using USB Camera**
 
+tros foxy:
 ```shell
 # Configure the tros.b environment
 source /opt/tros/setup.bash
+
+# Copy the configuration files required for running examples from the installation path of tros.b.
+cp -r /opt/tros/${TROS_DISTRO}/lib/mono2d_body_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_lmk_detection/config/ .
+cp -r /opt/tros/${TROS_DISTRO}/lib/hand_gesture_detection/config/ .
+
+# Configure USB camera
+export CAM_TYPE=usb
+
+# Launch the launch file
+ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
+```
+
+tros humble:
+```shell
+# Configure the tros.b humble environment
+source /opt/tros/humble/setup.bash
 
 # Copy the configuration files required for running examples from the installation path of tros.b.
 cp -r /opt/tros/${TROS_DISTRO}/lib/mono2d_body_detection/config/ .

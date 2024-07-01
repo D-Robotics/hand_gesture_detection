@@ -1,5 +1,9 @@
 # Changelog for package hand_gesture_detection
 
+tros_2.4.0 (2024-07-01)
+------------------
+1. 新增X5适配。
+
 tros_2.3.0 (2024-03-28)
 ------------------
 1. 新增适配ros2 humble零拷贝。

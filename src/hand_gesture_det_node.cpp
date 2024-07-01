@@ -325,6 +325,7 @@ int HandGestureDetNode::TenserProcess(
     dnn_output->timestamp = timestamp;
     dnn_output->track_id = track_id;
 
+    hbSysFlushMem(&input_tensors.at(idx)->sysMem[0], HB_SYS_MEM_CACHE_CLEAN);
     std::vector<std::shared_ptr<DNNTensor>> inputs{input_tensors.at(idx)};
 
     struct timespec time_now = {0, 0};

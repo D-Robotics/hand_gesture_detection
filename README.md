@@ -23,12 +23,12 @@ Application Scenarios: The gesture recognition algorithm integrates technologies
 
 | Item Name            | Manufacturer | Reference Link                                                    |
 | :------------------ | -------- | ------------------------------------------------------------ |
-| RDK X3 / RDK Ultra  | Multiple manufacturers | [RDK X3](https://developer.horizon.cc/rdkx3)<br>[RDK Ultra](https://developer.horizon.cc/rdkultra) |
+| RDK X3 / RDK Ultra  | Multiple manufacturers | [RDK X3](https://developer.d-robotics.cc/rdkx3)<br>[RDK Ultra](https://developer.horizon.cc/rdkultra) |
 | camera              | Multiple manufacturers | [MIPI Camera](https://developer.horizon.cc/nodehubdetail/168958376283445781)<br>[USB Camera](https://developer.horizon.cc/nodehubdetail/168958376283445777)|
 
 # Preparation
 
-- The Horizon RDK has been imaged with the Ubuntu 20.04 system provided by the Horizon.
+- The RDK has been imaged with the Ubuntu 20.04 system.
 - The camera is correctly connected to RDK X3.
 
 # Instructions
@@ -132,7 +132,7 @@ Open a browser on the same network computer and visit [http://IP:8000](http://IP
 
 ## Topics
 
-The results of human body recognition and gesture awakening are published through the [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/HorizonRDK/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg) topic. The detailed definition of this topic is as follows:
+The results of human body recognition and gesture awakening are published through the [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/D-Robotics/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg) topic. The detailed definition of this topic is as follows:
 
 ```shell
 # Perception Result
@@ -157,10 +157,10 @@ Target[] disappeared_targets
 
 | Name                 | Message Type        | Description|
 | ---------------------- | ----------- |---------------------------- |
-| /hobot_hand_gesture_detection     | [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/HorizonRDK/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg)     | Publish detected gesture target information (only appears when gesture wake-up is enabled) |
-| /hobot_mono2d_body_detection          | [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/HorizonRDK/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg)   | Subscribe to the human body target information recognized by the previous node, including human body bounding box, hand bounding box, and human body keypoints |
-| /hobot_hand_lmk_detection | [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/HorizonRDK/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg)  |  Subscribe to the hand keypoint information recognized by the previous node (only appears when gesture wake-up is enabled) |
-| /hbmem_img | [hobot_msgs/hbm_img_msgs/msg/HbmMsg1080P](https://github.com/HorizonRDK/hobot_msgs/blob/develop/hbm_img_msgs/msg/HbmMsg1080P.msg)  | Subscribe to image data published by the previous node using shared memory communication method when is_shared_mem_sub == 1|
+| /hobot_hand_gesture_detection     | [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/D-Robotics/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg)     | Publish detected gesture target information (only appears when gesture wake-up is enabled) |
+| /hobot_mono2d_body_detection          | [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/D-Robotics/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg)   | Subscribe to the human body target information recognized by the previous node, including human body bounding box, hand bounding box, and human body keypoints |
+| /hobot_hand_lmk_detection | [hobot_msgs/ai_msgs/msg/PerceptionTargets](https://github.com/D-Robotics/hobot_msgs/blob/develop/ai_msgs/msg/PerceptionTargets.msg)  |  Subscribe to the hand keypoint information recognized by the previous node (only appears when gesture wake-up is enabled) |
+| /hbmem_img | [hobot_msgs/hbm_img_msgs/msg/HbmMsg1080P](https://github.com/D-Robotics/hobot_msgs/blob/develop/hbm_img_msgs/msg/HbmMsg1080P.msg)  | Subscribe to image data published by the previous node using shared memory communication method when is_shared_mem_sub == 1|
 | /image_raw | hsensor_msgs/msg/Image  | Subscribe to the relevant image data published by the previous node using the ordinary ROS method when is_shared_mem_sub == 0|
 
 ## Parameters

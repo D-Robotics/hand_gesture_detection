@@ -23,13 +23,13 @@ Application Scenarios: The gesture recognition algorithm integrates technologies
 
 | Item Name            | Manufacturer | Reference Link                                                    |
 | :------------------ | -------- | ------------------------------------------------------------ |
-| RDK X3 / RDK Ultra  | Multiple manufacturers | [RDK X3](https://developer.d-robotics.cc/rdkx3)<br>[RDK Ultra](https://developer.horizon.cc/rdkultra) |
+| RDK X3 / RDK X5 / RDK Ultra  | Multiple manufacturers | [RDK X3](https://developer.d-robotics.cc/rdkx3)<br>[RDK Ultra](https://developer.horizon.cc/rdkultra) |
 | camera              | Multiple manufacturers | [MIPI Camera](https://developer.horizon.cc/nodehubdetail/168958376283445781)<br>[USB Camera](https://developer.horizon.cc/nodehubdetail/168958376283445777)|
 
 # Preparation
 
-- The RDK has been imaged with the Ubuntu 20.04 system.
-- The camera is correctly connected to RDK X3.
+- The RDK has been imaged with the Ubuntu system.
+- The camera is correctly connected to RDK.
 
 # Instructions
 

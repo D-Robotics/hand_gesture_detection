@@ -102,6 +102,7 @@ using BoxVector = std::vector<std::shared_ptr<hbDNNRoi>>;
 
 enum class gesture_type {
   Background = 0,
+  // 静态手势
   ThumbUp = 2,  // 竖起大拇指
   Victory = 3,  // “V”手势
   Mute = 4,  // “嘘”手势
@@ -109,7 +110,12 @@ enum class gesture_type {
   Okay = 11,  // OK手势
   ThumbLeft = 12,  // 大拇指向左
   ThumbRight = 13,  // 大拇指向右
-  Awesome = 14  // 666手势
+  Awesome = 14,  // 666手势
+
+  // 动态手势
+  PinchMove = 15,                 // 三指捏合拖动
+  PinchRotateAntiClockwise = 16,  // 三指捏合逆时针画圈
+  PinchRotateClockwise = 17       // 三指捏合顺时针画圈
 };
 
 struct GestureRes {

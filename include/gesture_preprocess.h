@@ -34,9 +34,14 @@ using inference::TensorLayout;
 
 class GesturePreProcess {
  public:
-  explicit GesturePreProcess(const std::string& json_str) {
+  explicit GesturePreProcess(const std::string& json_str, bool is_dynamic_gesture = false) {
     if (!json_str.empty()) {
       // todo 从配置文件中更新配置参数
+    }
+    if (is_dynamic_gesture) {
+      seq_len_ = seq_len_dynamic_;
+    } else {
+      seq_len_ = seq_len_static_;
     }
     std::stringstream ss;
     ss << "seq_len: " << seq_len_ << ", kps_len: " << kps_len_
@@ -66,6 +71,8 @@ class GesturePreProcess {
  private:
   uint64_t startup_ts_second_ = 0;
 
+  int seq_len_static_ = 8;
+  int seq_len_dynamic_ = 32;
   int seq_len_ = 8;
   int kps_len_ = 21;
   int buf_len_ = 100;

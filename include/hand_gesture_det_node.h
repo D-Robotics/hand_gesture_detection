@@ -25,6 +25,7 @@
 #include "include/gesture_preprocess.h"
 #include "include/gesture_postprocess.h"
 #include "threads/threadpool.h"
+#include "vote.hpp"
 
 #ifndef HAND_GESTURE_DET_NODE_H_
 #define HAND_GESTURE_DET_NODE_H_
@@ -71,9 +72,16 @@ class HandGestureDetNode : public DnnNode {
   int PostProcess(const std::shared_ptr<DnnNodeOutput> &outputs) override;
 
  private:
-  std::string model_file_name_ = "config/gestureDet_8x21.hbm";
-  std::string model_name_ = "gestureDet_8x21";
+  std::string pkg_name_ = "hand_gesture_detection";
+  std::string default_static_model_file_name_ = "config/gestureDet_8x21.hbm";
+  std::string default_static_model_name_ = "gestureDet_8x21";
+  std::string default_dynamic_model_file_name_ = "config/gestureDet_32x21.hbm";
+  std::string default_dynamic_model_name_ = "gestureDet_32x21";
+
+  std::string model_file_name_ = "";
+  std::string model_name_ = "";
   ModelTaskType model_task_type_ = ModelTaskType::ModelInferType;
+  bool is_dynamic_gesture_ = false;
 
   int model_input_width_ = -1;
   int model_input_height_ = -1;
@@ -123,6 +131,10 @@ class HandGestureDetNode : public DnnNode {
           &gesture_outputs);
 
   int GetModelIOInfo();
+
+  // 使用0.25秒内的数据投票
+  float time_interval_sec_ = 0.25;
+  std::shared_ptr<tros::Vote> sp_vote_ = nullptr;
 };
 }  // namespace inference
 #endif  // HAND_GESTURE_DET_NODE_H_

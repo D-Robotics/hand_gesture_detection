@@ -155,14 +155,14 @@ void LmksProcess::NormKps(std::shared_ptr<inference::LandmarkVector>& kpses,
 
   if (kpses->size() != static_cast<uint32_t>(seq_len_)) {
     RCLCPP_ERROR(rclcpp::get_logger("lmk pro"),
-                 "kps len is unmatch: %d, %d",
+                 "kps len is unmatch: %ld, %d",
                  kpses->size(),
                  seq_len_);
     return;
   }
 
   RCLCPP_DEBUG(rclcpp::get_logger("lmk pro"),
-               "kpses->size: %d, boxes->size: %d",
+               "kpses->size: %ld, boxes->size: %ld",
                kpses->size(),
                boxes->size());
 

@@ -30,6 +30,7 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "ament_index_cpp/get_package_prefix.hpp"
 
 builtin_interfaces::msg::Time ConvertToRosTime(
     const struct timespec& time_spec) {
@@ -63,24 +64,54 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
   this->get_parameter<std::string>("ai_msg_sub_topic_name",
                                    ai_msg_sub_topic_name_);
 
+  model_name_ = this->declare_parameter<std::string>("model_name", model_name_);
+  is_dynamic_gesture_ = this->declare_parameter<bool>("is_dynamic_gesture",
+                                                      is_dynamic_gesture_);
+  time_interval_sec_ = this->declare_parameter<float>("time_interval_sec",
+                                                     time_interval_sec_);
+
+  // 获取pkg路径
+  std::string pkg_path = ament_index_cpp::get_package_prefix(pkg_name_);
+  std::string config_path = pkg_path + "/lib/" + pkg_name_ + "/";
+  RCLCPP_WARN(this->get_logger(), "pkg_name: %s, pkg_path: %s, config_path: %s",
+    pkg_name_.c_str(), pkg_path.c_str(), config_path.c_str());
+
+  if (model_file_name_.empty() || model_name_.empty()) {
+    // file or model name is not set, using default parameters 
+    if (is_dynamic_gesture_) {
+      model_file_name_ = config_path + default_dynamic_model_file_name_;
+      model_name_ = default_dynamic_model_name_;
+    } else {
+      model_file_name_ = config_path + default_static_model_file_name_;
+      model_name_ = default_static_model_name_;
+    }
+  }
+
+  if (is_dynamic_gesture_) {
+    sp_vote_ = std::make_shared<tros::Vote>(tros::VoTeType::TIMEINTERVAL, 30, time_interval_sec_);
+  }
+
   std::stringstream ss;
   ss << "Parameter:"
-     << "\n is_sync_mode_: " << is_sync_mode_
-     << "\n model_file_name_: " << model_file_name_
-     << "\n ai_msg_sub_topic_name_: " << ai_msg_sub_topic_name_
+     << "\n is_sync_mode: " << is_sync_mode_
+     << "\n is_dynamic_gesture: " << is_dynamic_gesture_
+     << "\n time_interval_sec: " << time_interval_sec_
+     << "\n model_file_name: " << model_file_name_
+     << "\n model_name: " << model_name_
+     << "\n ai_msg_sub_topic_name: " << ai_msg_sub_topic_name_
      << "\n ai_msg_pub_topic_name: " << ai_msg_pub_topic_name;
   RCLCPP_WARN(
-      rclcpp::get_logger("hand gesture det node"), "%s", ss.str().c_str());
+      this->get_logger(), "%s", ss.str().c_str());
 
   if (Init() != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"), "Init failed!");
+    RCLCPP_ERROR(this->get_logger(), "Init failed!");
   }
 
   if (GetModelInputSize(0, model_input_width_, model_input_height_) < 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+    RCLCPP_ERROR(this->get_logger(),
                  "Get model input size fail!");
   } else {
-    RCLCPP_INFO(rclcpp::get_logger("hand gesture det node"),
+    RCLCPP_INFO(this->get_logger(),
                 "The model input width is %d and height is %d",
                 model_input_width_,
                 model_input_height_);
@@ -89,14 +120,14 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
   GetModelIOInfo();
 
   gesture_preprocess_ =
-      std::make_shared<GesturePreProcess>(gesture_preprocess_config_);
+      std::make_shared<GesturePreProcess>(gesture_preprocess_config_, is_dynamic_gesture_);
 
   gesture_postprocess_ = std::make_shared<GesturePostProcess>("");
 
   thread_pool_ = std::make_shared<ThreadPool>();
   thread_pool_->msg_handle_.CreatThread(task_num_);
 
-  RCLCPP_WARN(rclcpp::get_logger("hand gesture det node"),
+  RCLCPP_WARN(this->get_logger(),
               "Create subscription with topic_name: %s",
               ai_msg_sub_topic_name_.c_str());
   ai_msg_subscription_ =
@@ -106,7 +137,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
           std::bind(
               &HandGestureDetNode::AiMsgProcess, this, std::placeholders::_1));
 
-  RCLCPP_WARN(rclcpp::get_logger("hand gesture det node"),
+  RCLCPP_WARN(this->get_logger(),
               "ai_msg_pub_topic_name: %s",
               ai_msg_pub_topic_name.data());
   msg_publisher_ = this->create_publisher<ai_msgs::msg::PerceptionTargets>(
@@ -116,7 +147,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
 HandGestureDetNode::~HandGestureDetNode() {}
 
 int HandGestureDetNode::SetNodePara() {
-  RCLCPP_INFO(rclcpp::get_logger("hand gesture det node"), "Set node para.");
+  RCLCPP_INFO(this->get_logger(), "Set node para.");
   if (!dnn_node_para_ptr_) {
     return -1;
   }
@@ -135,7 +166,7 @@ int HandGestureDetNode::PostProcess(
 
   if (!node_output ||
       output_index_ >= static_cast<int32_t>(node_output->output_tensors.size())) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+    RCLCPP_ERROR(this->get_logger(),
                  "Invalid node output");
     return -1;
   }
@@ -147,7 +178,7 @@ int HandGestureDetNode::PostProcess(
   }
 
   if (!gesture_postprocess_) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+    RCLCPP_ERROR(this->get_logger(),
               "Invalid gesture postprocess");
     return -1;
   }
@@ -157,19 +188,40 @@ int HandGestureDetNode::PostProcess(
                                               hand_gesture_output->timestamp);
 
   if (!msg_publisher_) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+    RCLCPP_ERROR(this->get_logger(),
                  "Invalid msg_publisher_");
     return -1;
   }
 
   const auto& res = gesture_res;
-  if (res->value_ < static_cast<int>(gesture_type::Background) ||
-      res->value_ > static_cast<int>(gesture_type::Awesome)) {
-    hand_gesture_output->gesture_res->gesture_res_.push_back(
-        gesture_type::Background);
+  if (!is_dynamic_gesture_) {
+    // static gesture
+    if (res->value_ < static_cast<int>(gesture_type::Background) ||
+        res->value_ > static_cast<int>(gesture_type::Awesome)) {
+      hand_gesture_output->gesture_res->gesture_res_.push_back(
+          gesture_type::Background);
+    } else {
+      hand_gesture_output->gesture_res->gesture_res_.push_back(
+          static_cast<gesture_type>(res->value_));
+    }
   } else {
-    hand_gesture_output->gesture_res->gesture_res_.push_back(
-        static_cast<gesture_type>(res->value_));
+    // dynamic gesture
+    if (res->value_ != static_cast<int>(gesture_type::PinchMove) &&
+        res->value_ != static_cast<int>(gesture_type::PinchRotateClockwise) &&
+        res->value_ != static_cast<int>(gesture_type::PinchRotateAntiClockwise)) {
+      hand_gesture_output->gesture_res->gesture_res_.push_back(
+          gesture_type::Background);
+    } else {
+      auto gesture = static_cast<gesture_type>(res->value_);
+      // mirror clock and anticlockwise
+      if (gesture == gesture_type::PinchRotateClockwise) {
+        gesture = gesture_type::PinchRotateAntiClockwise;
+      } else if (gesture == gesture_type::PinchRotateAntiClockwise) {
+        gesture = gesture_type::PinchRotateClockwise;
+      }
+
+      hand_gesture_output->gesture_res->gesture_res_.push_back(gesture);
+    }
   }
 
   hand_gesture_output->gesture_res->prom_.set_value(0);
@@ -245,7 +297,7 @@ void HandGestureDetNode::Publish(
     if (interval >= 1000) {
       float out_fps = static_cast<float>(output_frameCount_) /
                       (static_cast<float>(interval) / 1000.0);
-      RCLCPP_WARN(rclcpp::get_logger("hand_gesture_det"),
+      RCLCPP_WARN(this->get_logger(),
                   "Pub smart fps %.2f",
                   out_fps);
 
@@ -260,7 +312,7 @@ void HandGestureDetNode::Publish(
   }
 
   RCLCPP_INFO(
-      rclcpp::get_logger("hand gesture det node"), "%s", ss.str().c_str());
+      this->get_logger(), "%s", ss.str().c_str());
 
   pub_ai_msg->perfs.push_back(perf_preprocess);
 
@@ -308,7 +360,7 @@ int HandGestureDetNode::TenserProcess(
 
   auto model_manage = GetModel();
   if (!model_manage) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand_gesture_det"), "Invalid model");
+    RCLCPP_ERROR(this->get_logger(), "Invalid model");
     return -1;
   }
 
@@ -336,7 +388,7 @@ int HandGestureDetNode::TenserProcess(
 
     uint32_t ret = 0;
     // 3. 开始预测
-    RCLCPP_DEBUG(rclcpp::get_logger("hand gesture det node"),
+    RCLCPP_DEBUG(this->get_logger(),
                 "task_num: %d",
                 dnn_node_para_ptr_->task_num);
     ret = Run(
@@ -344,7 +396,7 @@ int HandGestureDetNode::TenserProcess(
 
     // 4. 处理预测结果，如渲染到图片或者发布预测结果
     if (ret != 0) {
-      RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"),
+      RCLCPP_ERROR(this->get_logger(),
                    "Run predict failed!");
       return ret;
     }
@@ -370,6 +422,41 @@ int HandGestureDetNode::TenserProcess(
       }
     }
   }
+
+  if (is_dynamic_gesture_ && sp_vote_) {
+    // clear cache
+    std::vector<uint32_t> disappeared_id_list;
+    for (const auto &disappeared_target : msg->disappeared_targets)
+    {
+      for (const auto &roi : disappeared_target.rois)
+      {
+          if ("hand" == roi.type)
+          {
+            disappeared_id_list.push_back(disappeared_target.track_id);
+          }
+      }
+    }
+    sp_vote_->ClearCache(disappeared_id_list);
+
+    // vote
+    for (auto& gesture_output : gesture_outputs) {
+      auto track_id = gesture_output.first;
+      auto& gesture_res = gesture_output.second;
+      if (gesture_res && !gesture_res->gesture_res_.empty()) {
+        for (gesture_type& res : gesture_res->gesture_res_) {
+          int in_val = static_cast<int>(res);
+          int out_val;
+          if (sp_vote_ && sp_vote_->DoProcess(in_val, track_id, out_val) == 0) {
+            if (out_val >= static_cast<int>(gesture_type::PinchMove) &&
+              out_val <= static_cast<int>(gesture_type::PinchRotateClockwise)) {
+              res = static_cast<gesture_type>(out_val);
+            }
+          }
+        }
+      }
+    }
+  }
+
 
   if (msg_publisher_) {
     Publish(msg, perf_preprocess, gesture_outputs);
@@ -400,7 +487,7 @@ void HandGestureDetNode::AiMsgProcess(
       float fps = static_cast<float>(output_frameCount) /
                   (static_cast<float>(interval) / 1000.0);
       RCLCPP_WARN(
-          rclcpp::get_logger("hand_gesture_det"), "Sub smart fps %.2f", fps);
+          this->get_logger(), "Sub smart fps %.2f", fps);
       tp_tp = std::chrono::system_clock::now();
       output_frameCount = 0;
     }
@@ -412,7 +499,7 @@ void HandGestureDetNode::AiMsgProcess(
      << ", stamp: " << msg->header.stamp.sec << "_"
      << msg->header.stamp.nanosec;
   RCLCPP_INFO(
-      rclcpp::get_logger("hand gesture det node"), "%s", ss.str().c_str());
+      this->get_logger(), "%s", ss.str().c_str());
 
   auto pub_msg = [this, msg]() {
     ai_msgs::msg::PerceptionTargets::UniquePtr ai_msg(
@@ -437,7 +524,7 @@ void HandGestureDetNode::AiMsgProcess(
       if (interval >= 1000) {
         float out_fps = static_cast<float>(output_frameCount_) /
                         (static_cast<float>(interval) / 1000.0);
-        RCLCPP_WARN(rclcpp::get_logger("hand_gesture_det"),
+        RCLCPP_WARN(this->get_logger(),
                     "Pub smart fps %.2f",
                     out_fps);
 
@@ -475,7 +562,7 @@ void HandGestureDetNode::AiMsgProcess(
     std::lock_guard<std::mutex> lock(thread_pool_->msg_mutex_);
     if (thread_pool_->msg_handle_.GetTaskNum() >=
         thread_pool_->msg_limit_count_) {
-      RCLCPP_WARN(rclcpp::get_logger("dnn"),
+      RCLCPP_WARN(this->get_logger(),
                   "Task Size: %d exceeds limit: %d",
                   thread_pool_->msg_handle_.GetTaskNum(),
                   thread_pool_->msg_limit_count_);
@@ -504,7 +591,7 @@ void HandGestureDetNode::AiMsgProcess(
 int HandGestureDetNode::GetModelIOInfo() {
   auto model_manage = GetModel();
   if (!model_manage) {
-    RCLCPP_ERROR(rclcpp::get_logger("hand gesture det node"), "Invalid model");
+    RCLCPP_ERROR(this->get_logger(), "Invalid model");
     return -1;
   }
 
@@ -520,7 +607,7 @@ int HandGestureDetNode::GetModelIOInfo() {
        << ", tensorType = " << input_model_info_[input_idx].tensorType
        << ", tensorLayout = " << input_model_info_[input_idx].tensorLayout;
     RCLCPP_WARN(
-        rclcpp::get_logger("hand gesture det node"), "%s", ss.str().c_str());
+        this->get_logger(), "%s", ss.str().c_str());
   }
 
   return 0;

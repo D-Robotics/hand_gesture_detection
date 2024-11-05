@@ -366,7 +366,7 @@ int GesturePreProcess::Execute(
       std::vector<std::shared_ptr<inference::Landmarks>> lmkses;
 
       RCLCPP_DEBUG(rclcpp::get_logger("preprocess"),
-                   "target rois size: %d, points size: %d",
+                   "target rois size: %ld, points size: %ld",
                    target.rois.size(),
                    target.points.size());
 
@@ -387,12 +387,12 @@ int GesturePreProcess::Execute(
       }
 
       RCLCPP_INFO(rclcpp::get_logger("preprocess"),
-                  "target id: %d has hand roi size: %d",
+                  "target id: %ld has hand roi size: %ld",
                   track_id,
                   rois.size());
       for (const auto& point : target.points) {
         RCLCPP_DEBUG(rclcpp::get_logger("preprocess"),
-                     "point.type: %s,  size: %d",
+                     "point.type: %s,  size: %ld",
                      point.type.c_str(),
                      point.point.size());
         auto lmk = std::make_shared<inference::Landmarks>();
@@ -402,18 +402,18 @@ int GesturePreProcess::Execute(
           }
         }
         RCLCPP_DEBUG(rclcpp::get_logger("preprocess"),
-                     "hand lmk point size: %d",
+                     "hand lmk point size: %ld",
                      lmk->size());
         lmkses.push_back(lmk);
       }
 
       RCLCPP_INFO(
-          rclcpp::get_logger("preprocess"), "hand lmk size: %d", lmkses.size());
+          rclcpp::get_logger("preprocess"), "hand lmk size: %ld", lmkses.size());
 
       if (rois.size() != lmkses.size()) {
         RCLCPP_WARN(
             rclcpp::get_logger("preprocess"),
-            "target id: %d rois.size: %d is unmatch with lmkses.size: %d",
+            "target id: %ld rois.size: %ld is unmatch with lmkses.size: %ld",
             track_id,
             rois.size(),
             lmkses.size());
@@ -436,7 +436,7 @@ int GesturePreProcess::Execute(
             std::vector<std::shared_ptr<inference::Landmarks>>>();
         // currently only support gesture detection
         RCLCPP_DEBUG(
-            rclcpp::get_logger("preprocess"), "in kps->size: %d", lmks->size());
+            rclcpp::get_logger("preprocess"), "in kps->size: %ld", lmks->size());
         lmks_proc_.Execute(track_id, roi, lmks, cached_kpses, timestamp);
         if (cached_kpses->size() < static_cast<uint32_t>(seq_len_)) {
           continue;

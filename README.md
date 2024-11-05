@@ -6,6 +6,8 @@ The gesture recognition algorithm example subscription includes the algorithm ms
 
 The supported gesture recognition categories of the algorithm, as well as the corresponding numerical values in the algorithm msg (Attribute member with type "gesture"), are as follows:
 
+1. Static Gesture
+
 | Gesture     | Description     | Value     |
 | ---------- | ---------- | ---------- |
 | ThumbUp    | Thumb up gesture     | 2 |
@@ -16,6 +18,14 @@ The supported gesture recognition categories of the algorithm, as well as the co
 | ThumbLeft  | Thumb pointing left    | 12 |
 | ThumbRight | Thumb pointing right    | 13 |
 | Awesome    | 666 gesture    | 14 |
+
+2. Dynamic Gesture
+
+| Gesture     | Description     | Value     |
+| ---------- | ---------- | ---------- |
+| PinchMove    | Three fingers kneading and dragging | 15 |
+| PinchRotateAntiClockwise    | Three fingers kneading counterclockwise circle    | 16 |
+| PinchRotateClockwise       | Three fingers kneading clockwise circle   | 17 |
 
 Application Scenarios: The gesture recognition algorithm integrates technologies such as hand keypoint detection and gesture analysis, enabling the computer to interpret human gestures into corresponding commands. It can realize functions like gesture control and sign language translation, mainly applied in smart homes, smart cockpits, smart wearable devices, and other fields.
 

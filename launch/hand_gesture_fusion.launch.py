@@ -20,10 +20,11 @@ from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
+from launch.actions import GroupAction
 
 def generate_launch_description():
-    log_level = LaunchConfiguration('log_level')
+    log_level_arg = DeclareLaunchArgument(
+        'log_level', default_value='warn')
     max_slide_window_size_cmd = DeclareLaunchArgument(
         "max_slide_window_size", default_value="30",
         description="max_slide_window_size")
@@ -67,11 +68,27 @@ def generate_launch_description():
             {"ai_msg_pub_topic_name": "/hobot_hand_dynamic_gesture_detection"},
             {"ai_msg_sub_topic_name": "/hobot_hand_lmk_detection"},
             {"is_dynamic_gesture": True},
-            {"time_interval_sec": LaunchConfiguration('time_interval_sec')}
+            {"time_interval_sec": LaunchConfiguration('time_interval_sec')},
+            {"threshold": 0.5}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )
     
+    face_landmarks_det_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("face_landmarks_detection"),
+                "launch/face_landmarks_det_node.launch.py",
+            )
+        ),
+        launch_arguments={
+            "ai_msg_sub_topic_name": "/hobot_mono2d_body_detection",
+            "ai_msg_pub_topic_name": "/hobot_face_landmarks_detection",
+            "is_shared_mem_sub": "1",
+            "log_level": LaunchConfiguration("log_level"),
+        }.items(),
+    )
+
     face_age_det_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -84,7 +101,7 @@ def generate_launch_description():
             "ai_msg_pub_topic_name": "/hobot_face_age_detection",
             "is_shared_mem_sub": "1",
             "max_slide_window_size": LaunchConfiguration("max_slide_window_size"),
-            "log_level": log_level,
+            "log_level": LaunchConfiguration("log_level"),
         }.items(),
     )
 
@@ -95,21 +112,29 @@ def generate_launch_description():
         output='screen',
         parameters=[
                     {'topic_name_base': '/hobot_hand_static_gesture_detection'},
-                    {'topic_names_fusion': ['/hobot_face_age_detection', '/hobot_hand_dynamic_gesture_detection']},
+                    {'topic_names_fusion': ['/hobot_face_age_detection', 'hobot_face_landmarks_detection', '/hobot_hand_dynamic_gesture_detection']},
                     {'pub_fusion_topic_name': '/tros_perc_fusion'},
                     {'filter_duplicated_roi': True}
         ],
-       arguments=['--ros-args', '--log-level', log_level]
+       arguments=['--ros-args', '--log-level', LaunchConfiguration("log_level")]
     )
 
-    return LaunchDescription(
-        [
-            max_slide_window_size_cmd,
-            time_interval_sec_arg,
-            hand_lmk_det_node,
-            hand_static_gesture_det_node,
-            hand_dynamic_gesture_det_node,
-            face_age_det_node,
-            perc_fusion_node
-        ]
-    )
+    group_action_face_lmk = GroupAction([
+        face_landmarks_det_node,
+    ])
+
+    group_action_batch = GroupAction([
+        hand_lmk_det_node,
+        hand_static_gesture_det_node,
+        hand_dynamic_gesture_det_node,
+        face_age_det_node,
+        perc_fusion_node
+        ])
+
+    ld = LaunchDescription()
+    ld.add_action(max_slide_window_size_cmd)
+    ld.add_action(time_interval_sec_arg)
+    ld.add_action(log_level_arg)
+    ld.add_action(group_action_face_lmk)
+    ld.add_action(group_action_batch)
+    return ld

@@ -88,6 +88,8 @@ class HandGestureDetNode : public DnnNode {
   int32_t model_output_count_ = 1;
   const int32_t output_index_ = 0;
 
+  float threshold_ = 0.5;
+
   int is_sync_mode_ = 0;
   int task_num_ = 4;
 

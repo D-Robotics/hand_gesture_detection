@@ -26,7 +26,10 @@ namespace inference {
 
 class GesturePostProcess {
  public:
-  explicit GesturePostProcess(std::string json_str) { Init(json_str); }
+  explicit GesturePostProcess(std::string json_str, float threshold) {
+    threshold_ = threshold;
+    Init(json_str);
+  }
 
   ~GesturePostProcess() {}
 

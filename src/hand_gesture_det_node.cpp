@@ -69,6 +69,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
                                                       is_dynamic_gesture_);
   time_interval_sec_ = this->declare_parameter<float>("time_interval_sec",
                                                      time_interval_sec_);
+  threshold_ = this->declare_parameter<float>("threshold", threshold_);
 
   // 获取pkg路径
   std::string pkg_path = ament_index_cpp::get_package_prefix(pkg_name_);
@@ -96,6 +97,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
      << "\n is_sync_mode: " << is_sync_mode_
      << "\n is_dynamic_gesture: " << is_dynamic_gesture_
      << "\n time_interval_sec: " << time_interval_sec_
+     <<"\n threshold: " << threshold_
      << "\n model_file_name: " << model_file_name_
      << "\n model_name: " << model_name_
      << "\n ai_msg_sub_topic_name: " << ai_msg_sub_topic_name_
@@ -122,7 +124,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
   gesture_preprocess_ =
       std::make_shared<GesturePreProcess>(gesture_preprocess_config_, is_dynamic_gesture_);
 
-  gesture_postprocess_ = std::make_shared<GesturePostProcess>("");
+  gesture_postprocess_ = std::make_shared<GesturePostProcess>("", threshold_);
 
   thread_pool_ = std::make_shared<ThreadPool>();
   thread_pool_->msg_handle_.CreatThread(task_num_);

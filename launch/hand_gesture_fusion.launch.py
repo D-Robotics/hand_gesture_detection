@@ -36,6 +36,14 @@ def generate_launch_description():
         'pub_fusion_topic_name',
         default_value='/tros_perc_fusion',
         description='tros fusion ai message publish topic')
+    static_gesture_task_num_arg = DeclareLaunchArgument(
+        'static_gesture_task_num',
+        default_value='4',
+        description='static gesture task num')
+    dynamic_gesture_task_num_arg = DeclareLaunchArgument(
+        'dynamic_gesture_task_num',
+        default_value='4',
+        description='dynamic gesture task num')
 
     hand_lmk_det_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -57,7 +65,8 @@ def generate_launch_description():
         parameters=[
             {"ai_msg_pub_topic_name": "/hobot_hand_static_gesture_detection"},
             {"ai_msg_sub_topic_name": "/hobot_hand_lmk_detection"},
-            {"is_dynamic_gesture": False}
+            {"is_dynamic_gesture": False},
+            {"task_num": LaunchConfiguration('static_gesture_task_num')}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )
@@ -73,7 +82,8 @@ def generate_launch_description():
             {"ai_msg_sub_topic_name": "/hobot_hand_lmk_detection"},
             {"is_dynamic_gesture": True},
             {"time_interval_sec": LaunchConfiguration('time_interval_sec')},
-            {"threshold": 0.5}
+            {"threshold": 0.5},
+            {"task_num": LaunchConfiguration('dynamic_gesture_task_num')}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )
@@ -131,11 +141,11 @@ def generate_launch_description():
     
     group_action_face_lmk = GroupAction([
         face_landmarks_det_node,
+        hand_static_gesture_det_node,
     ])
 
     group_action_batch = GroupAction([
         hand_lmk_det_node,
-        hand_static_gesture_det_node,
         hand_dynamic_gesture_det_node,
         face_age_det_node,
         perc_fusion_node,
@@ -147,6 +157,8 @@ def generate_launch_description():
     ld.add_action(time_interval_sec_arg)
     ld.add_action(log_level_arg)
     ld.add_action(pub_fusion_topic_name_arg)
+    ld.add_action(static_gesture_task_num_arg)
+    ld.add_action(dynamic_gesture_task_num_arg)
     ld.add_action(group_action_face_lmk)
     ld.add_action(group_action_batch)
     return ld

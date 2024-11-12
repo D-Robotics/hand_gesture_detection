@@ -43,6 +43,15 @@ def generate_launch_description():
         default_value='/hobot_hand_lmk_detection',
         description='hand landmark ai message publish topic')
 
+    static_gesture_task_num_arg = DeclareLaunchArgument(
+        'static_gesture_task_num',
+        default_value='4',
+        description='static gesture task num')
+    dynamic_gesture_task_num_arg = DeclareLaunchArgument(
+        'dynamic_gesture_task_num',
+        default_value='4',
+        description='dynamic gesture task num')
+    
     web_smart_topic_arg = DeclareLaunchArgument(
         'smart_topic',
         default_value='/hobot_hand_lmk_detection',
@@ -57,6 +66,7 @@ def generate_launch_description():
         'picture_format',
         default_value='nv12',
         description='feedback picture format')
+    
     fb_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -152,7 +162,8 @@ def generate_launch_description():
         parameters=[
             {"ai_msg_pub_topic_name": "/hobot_hand_static_gesture_detection"},
             {"ai_msg_sub_topic_name": "/hobot_hand_lmk_detection"},
-            {"is_dynamic_gesture": False}
+            {"is_dynamic_gesture": False},
+            {"task_num": LaunchConfiguration('static_gesture_task_num')}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )
@@ -168,7 +179,8 @@ def generate_launch_description():
             {"ai_msg_sub_topic_name": "/hobot_hand_lmk_detection"},
             {"is_dynamic_gesture": True},
             {"time_interval_sec": LaunchConfiguration('time_interval_sec')},
-            {"threshold": 0.5}
+            {"threshold": 0.5},
+            {"task_num": LaunchConfiguration('static_gesture_task_num')}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )
@@ -226,6 +238,7 @@ def generate_launch_description():
 
     group_action_face_lmk = GroupAction([
         face_landmarks_det_node,
+        hand_static_gesture_det_node,
     ])
 
     group_action_batch = GroupAction([
@@ -241,7 +254,6 @@ def generate_launch_description():
         web_node,
         mono2d_body_det_node,
         hand_lmk_det_node,
-        hand_static_gesture_det_node,
         hand_dynamic_gesture_det_node,
         face_age_det_node,
         perc_fusion_node,

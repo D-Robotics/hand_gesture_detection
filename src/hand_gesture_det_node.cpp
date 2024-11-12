@@ -70,6 +70,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
   time_interval_sec_ = this->declare_parameter<float>("time_interval_sec",
                                                      time_interval_sec_);
   threshold_ = this->declare_parameter<float>("threshold", threshold_);
+  task_num_ = this->declare_parameter<int>("task_num", task_num_);
 
   // 获取pkg路径
   std::string pkg_path = ament_index_cpp::get_package_prefix(pkg_name_);
@@ -95,6 +96,7 @@ HandGestureDetNode::HandGestureDetNode(const std::string& node_name,
   std::stringstream ss;
   ss << "Parameter:"
      << "\n is_sync_mode: " << is_sync_mode_
+     << "\n task_num: " << task_num_
      << "\n is_dynamic_gesture: " << is_dynamic_gesture_
      << "\n time_interval_sec: " << time_interval_sec_
      <<"\n threshold: " << threshold_
@@ -399,7 +401,7 @@ int HandGestureDetNode::TenserProcess(
     // 4. 处理预测结果，如渲染到图片或者发布预测结果
     if (ret != 0) {
       RCLCPP_ERROR(this->get_logger(),
-                   "Run predict failed!");
+                   "Run predict failed! ret: %d", ret);
       return ret;
     }
   }

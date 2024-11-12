@@ -32,6 +32,10 @@ def generate_launch_description():
         'time_interval_sec',
         default_value='0.25',
         description='time interval for hand gesture voting')
+    pub_fusion_topic_name_arg = DeclareLaunchArgument(
+        'pub_fusion_topic_name',
+        default_value='/tros_perc_fusion',
+        description='tros fusion ai message publish topic')
 
     hand_lmk_det_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -39,7 +43,7 @@ def generate_launch_description():
                 get_package_share_directory('hand_lmk_detection'),
                 'launch/hand_lmk_detection.launch.py')),
         launch_arguments={
-            'smart_topic': '/tros_perc_fusion',
+            'smart_topic': '/tros_perc_render',
             'hand_lmk_pub_topic': '/hobot_hand_lmk_detection'
         }.items()
     )
@@ -113,12 +117,18 @@ def generate_launch_description():
         parameters=[
                     {'topic_name_base': '/hobot_hand_static_gesture_detection'},
                     {'topic_names_fusion': ['/hobot_face_age_detection', 'hobot_face_landmarks_detection', '/hobot_hand_dynamic_gesture_detection']},
-                    {'pub_fusion_topic_name': '/tros_perc_fusion'},
-                    {'filter_duplicated_roi': True}
+                    {'pub_fusion_topic_name': LaunchConfiguration("pub_fusion_topic_name")},
+                    {'enable_filter': True}
         ],
        arguments=['--ros-args', '--log-level', LaunchConfiguration("log_level")]
     )
 
+    tros_lowpass_filter_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('tros_lowpass_filter'),
+                         'launch/low_pass.launch.py'))
+    )
+    
     group_action_face_lmk = GroupAction([
         face_landmarks_det_node,
     ])
@@ -128,13 +138,15 @@ def generate_launch_description():
         hand_static_gesture_det_node,
         hand_dynamic_gesture_det_node,
         face_age_det_node,
-        perc_fusion_node
+        perc_fusion_node,
+        tros_lowpass_filter_node
         ])
 
     ld = LaunchDescription()
     ld.add_action(max_slide_window_size_cmd)
     ld.add_action(time_interval_sec_arg)
     ld.add_action(log_level_arg)
+    ld.add_action(pub_fusion_topic_name_arg)
     ld.add_action(group_action_face_lmk)
     ld.add_action(group_action_batch)
     return ld

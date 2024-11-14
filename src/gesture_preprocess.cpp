@@ -411,7 +411,7 @@ int GesturePreProcess::Execute(
           rclcpp::get_logger("preprocess"), "hand lmk size: %ld", lmkses.size());
 
       if (rois.size() != lmkses.size()) {
-        RCLCPP_WARN(
+        RCLCPP_INFO(
             rclcpp::get_logger("preprocess"),
             "target id: %ld rois.size: %ld is unmatch with lmkses.size: %ld",
             track_id,

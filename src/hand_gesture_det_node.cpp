@@ -298,7 +298,7 @@ void HandGestureDetNode::Publish(
     auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
                         tp_now - *output_tp_)
                         .count();
-    if (interval >= 1000) {
+    if (interval >= 5000) {
       float out_fps = static_cast<float>(output_frameCount_) /
                       (static_cast<float>(interval) / 1000.0);
       RCLCPP_WARN(this->get_logger(),
@@ -487,7 +487,7 @@ void HandGestureDetNode::AiMsgProcess(
     auto interval =
         std::chrono::duration_cast<std::chrono::milliseconds>(tp_now - tp_tp)
             .count();
-    if (interval >= 1000) {
+    if (interval >= 5000) {
       float fps = static_cast<float>(output_frameCount) /
                   (static_cast<float>(interval) / 1000.0);
       RCLCPP_WARN(
@@ -525,7 +525,7 @@ void HandGestureDetNode::AiMsgProcess(
       auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
                           tp_now - *output_tp_)
                           .count();
-      if (interval >= 1000) {
+      if (interval >= 5000) {
         float out_fps = static_cast<float>(output_frameCount_) /
                         (static_cast<float>(interval) / 1000.0);
         RCLCPP_WARN(this->get_logger(),

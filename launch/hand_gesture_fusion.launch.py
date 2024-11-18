@@ -120,8 +120,8 @@ def generate_launch_description():
     )
 
     perc_fusion_node = Node(
-        package='tros_ai_fusion',
-        executable='tros_ai_fusion',
+        package='tros_perception_fusion',
+        executable='tros_perception_fusion',
         name='tros_perc_fusion_node',
         output='screen',
         parameters=[

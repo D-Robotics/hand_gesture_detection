@@ -119,19 +119,17 @@ def generate_launch_description():
         }.items(),
     )
 
-    perc_fusion_node = Node(
-        package='tros_perception_fusion',
-        executable='tros_perception_fusion',
-        name='tros_perc_fusion_node',
-        output='screen',
-        parameters=[
-                    {'topic_name_base': '/hobot_hand_static_gesture_detection'},
-                    {'topic_names_fusion': ['/hobot_face_age_detection', 'hobot_face_landmarks_detection', '/hobot_hand_dynamic_gesture_detection']},
-                    {'pub_fusion_topic_name': LaunchConfiguration("pub_fusion_topic_name")},
-                    {'enable_filter': True}
-        ],
-       arguments=['--ros-args', '--log-level', LaunchConfiguration("log_level")]
-    )
+    perc_fusion_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('tros_perception_fusion'),
+                            'launch/perc_fusion.launch.py')),
+        launch_arguments={
+            'topic_name_base': '/hobot_hand_static_gesture_detection',
+            'topic_names_fusion': '[/hobot_face_age_detection, /hobot_face_landmarks_detection, /hobot_hand_dynamic_gesture_detection]',
+            'pub_fusion_topic_name': LaunchConfiguration("pub_fusion_topic_name"),
+            "log_level": LaunchConfiguration("log_level"),
+        }.items(),
+   )
 
     tros_lowpass_filter_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

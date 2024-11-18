@@ -134,6 +134,9 @@ export CAM_TYPE=usb
 ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
 ```
 
+> [!NOTE]
+> launch脚本默认启动静态手势识别，对于`TROS Humble`版本，可以使用`is_dynamic_gesture`参数指定启动动态手势识别：`ros2 launch hand_gesture_detection hand_gesture_detection.launch.py is_dynamic_gesture:=True`。
+
 **3.查看效果**
 
 打开同一网络电脑的浏览器，访问[http://IP:8000](http://IP:8000)即可看到视觉识别的实时效果，其中IP为RDK的IP地址:

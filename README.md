@@ -133,6 +133,9 @@ export CAM_TYPE=usb
 ros2 launch hand_gesture_detection hand_gesture_detection.launch.py
 ```
 
+> [!NOTE]
+> The launch script defaults to starting the static gesture recognition. For the `TROS Humble` version, you can specify to start the dynamic gesture recognition using the `is_dynamic_gesture` parameter: `ros2 launch hand_gesture_detection hand_gesture_detection.launch.py is_dynamic_gesture:=True`.
+
 **3. Check the Effect**
 
 Open a browser on the same network computer and visit [http://IP:8000](http://IP:8000) to see the real-time effect of visual recognition, where IP is the IP address of RDK:

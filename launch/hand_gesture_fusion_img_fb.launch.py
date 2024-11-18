@@ -58,27 +58,12 @@ def generate_launch_description():
         description='websocket smart topic')
 
     # local image publish
-    feedback_picture_arg = DeclareLaunchArgument(
-        'picture',
-        default_value='./config/960x544.nv12',
-        description='feedback picture')
-    fb_image_format_arg = DeclareLaunchArgument(
-        'picture_format',
-        default_value='nv12',
-        description='feedback picture format')
-    
     fb_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
                 get_package_share_directory('hobot_image_publisher'),
                 'launch/hobot_image_publisher.launch.py')),
         launch_arguments={
-            'publish_image_source': LaunchConfiguration('picture'),
-            'publish_image_format': LaunchConfiguration('picture_format'),
-            'publish_source_image_w': '1920',
-            'publish_source_image_h': '1080',
-            'publish_output_image_w': '960',
-            'publish_output_image_h': '544',
             'publish_message_topic_name': '/img_png',
             'publish_fps': '30',
             'publish_is_shared_mem': 'False',
@@ -180,7 +165,7 @@ def generate_launch_description():
             {"is_dynamic_gesture": True},
             {"time_interval_sec": LaunchConfiguration('time_interval_sec')},
             {"threshold": 0.5},
-            {"task_num": LaunchConfiguration('static_gesture_task_num')}
+            {"task_num": LaunchConfiguration('dynamic_gesture_task_num')}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )
@@ -238,13 +223,12 @@ def generate_launch_description():
 
     group_action_face_lmk = GroupAction([
         face_landmarks_det_node,
+        static_gesture_task_num_arg,
         hand_static_gesture_det_node,
     ])
 
     group_action_batch = GroupAction([
         mono2d_body_pub_topic_arg,
-        feedback_picture_arg,
-        fb_image_format_arg,
         web_smart_topic_arg,
         hand_lmk_pub_topic_arg,
         
@@ -254,6 +238,7 @@ def generate_launch_description():
         web_node,
         mono2d_body_det_node,
         hand_lmk_det_node,
+        dynamic_gesture_task_num_arg,
         hand_dynamic_gesture_det_node,
         face_age_det_node,
         perc_fusion_node,

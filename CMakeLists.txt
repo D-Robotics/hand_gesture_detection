@@ -105,6 +105,11 @@ ${PROJECT_SOURCE_DIR}/config/${PREFIX_PATH}/
 DESTINATION lib/${PROJECT_NAME}/config/
 )
 
+install(FILES
+${PROJECT_SOURCE_DIR}/config/person_face_hand.jpg
+DESTINATION lib/${PROJECT_NAME}/config/
+)
+
 install(DIRECTORY
 ${PROJECT_SOURCE_DIR}/launch/
 DESTINATION share/${PROJECT_NAME}/launch)

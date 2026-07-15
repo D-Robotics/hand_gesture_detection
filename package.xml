@@ -15,6 +15,7 @@
   <depend>rclcpp</depend>
   <depend>dnn_node</depend>
   <depend>ai_msgs</depend>
+  <depend>ament_index_cpp</depend>
 
   <exec_depend>hand_lmk_detection</exec_depend>
 

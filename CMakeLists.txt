@@ -38,6 +38,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(ai_msgs REQUIRED)
 find_package(dnn_node REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 include_directories(include
   ${PROJECT_SOURCE_DIR}
@@ -88,6 +89,7 @@ ament_target_dependencies(
   rclcpp
   dnn_node
   ai_msgs
+  ament_index_cpp
 )
 
 include_directories(include
